@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #-------------------------------------------------------------------------------
 # Name:        GrooveShark Downloader
 # Purpose:
@@ -8,7 +9,6 @@
 # Copyright:   (c) burnett 2012
 # Licence:     DERP!PL
 #-------------------------------------------------------------------------------
-#!/usr/bin/env python
 
 import logging, hmac, json, urllib2
 import groovedownload
@@ -25,7 +25,11 @@ def main():
     print "Token: %s" % gs.session
     password = raw_input("Pass: ")
     token = gs.getToken(username, password)
-    print gs.api("authenticateUser", {'username':username,'token': token})
+    gs.authenticateUser(username, token)
+    playlists = gs.getUserPlaylists()
+    plid = playlists[1]['PlaylistID']
+    for song in gs.getPlaylist(plid)['Songs']:
+        print song['SongName']
 
 
 if __name__ == '__main__':

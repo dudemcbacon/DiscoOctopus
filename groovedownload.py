@@ -17,6 +17,12 @@ class GrooveDownload:
         self.api_url = 'https://api.grooveshark.com/ws3.php?sig='
         self.key = key
         self.secret = secret
+        self.session = ''
+        self.Username = ''
+        self.IsPremium = ''
+        self.UserID = ''
+        self.emailAddress = ''
+        self.IsAnywhere = ''
 
         # Start GrooveShark Session
         response = self.api('startSession')
@@ -33,7 +39,10 @@ class GrooveDownload:
 
         # startSession does not include a session ID
         if method != "startSession":
-            apiPOST['header']['sessionID'] = self.session
+            if self.session != '':
+                apiPOST['header']['sessionID'] = self.session
+            else:
+                raise GrooveException('Start a session first, bozo!')
         json_str = json.dumps(apiPOST)
         signature = self.__generateSignature(json_str)
         request = urllib2.Request(self.api_url + signature, json_str)
@@ -48,6 +57,33 @@ class GrooveDownload:
     def getToken(self, username, password):
         pass_hash = md5.new(password).hexdigest()
         return md5.new(username.lower() + pass_hash).hexdigest()
+
+    def authenticateUser(self, username, token):
+        response = self.api("authenticateUser", {'username':username,'token': token})
+        if response['result']['success'] == True:
+            self.Username = response['result']['Username']
+            self.IsPremium = response['result']['IsPremium']
+            self.UserID = response['result']['UserID']
+            self.emailAddress = response['result']['emailAddress']
+            self.IsAnywhere = response['result']['IsAnywhere']
+            return True
+        else:
+            raise GrooveException(json.dumps(response['errors']))
+
+    def getUserPlaylists(self, limit=0):
+        response = self.api('getUserPlaylists', {'limit':limit})
+        try:
+            return response['result']['playlists']
+        except:
+            raise GrooveException(json.dumps(response['errors']))
+
+    def getPlaylist(self, playlistID, limit=0):
+        response = self.api('getPlaylist', {'playlistID': playlistID, 'limit':limit})
+        try:
+           return response['result']
+        except:
+           raise GrooveException(json.dumps(response['errors']))
+           
 
 class GrooveException(Exception):
     def __init__(self, message):
